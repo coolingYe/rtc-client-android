@@ -1,0 +1,80 @@
+plugins {
+    id 'com.android.library'
+}
+
+// Source of webrtc.
+def WEBRTC_INC_PATH = "${projectDir}/deps/webrtc/src"
+// Precompiled static libs and jar for webrtc android.
+def WEBRTC_LIB_PATH = "${projectDir}/deps/webrtc/lib"
+
+android {
+    compileSdkVersion 31
+    ndkVersion '22.0.7026061'
+
+    defaultConfig {
+        minSdkVersion 18
+        targetSdkVersion 31
+        versionCode 340
+        versionName '3.4.0'
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        externalNativeBuild {
+            cmake {
+                // Passes optional arguments to CMake.
+                arguments "-DLIBWEBRTC_INCLUDE_PATH=" + WEBRTC_INC_PATH,
+                        "-DLIBWEBRTC_BINARY_PATH=" + WEBRTC_LIB_PATH,
+                        "-DMEDIASOUPCLIENT_BUILD_TESTS=false",
+                        "-DSDPTRANSFORM_BUILD_TESTS=OFF",
+                        "-DSDPTRANSFORM_BUILD_READMEHELPER=OFF",
+                        "-DMEDIASOUPCLIENT_LOG_TRACE=ON",
+                        "-DMEDIASOUPCLIENT_LOG_DEV=ON"
+            }
+        }
+
+        ndk {
+            // Specifies the ABI configurations of your native
+            // libraries Gradle should build and package with your APK.
+            abiFilters 'x86', 'x86_64', 'armeabi-v7a', 'arm64-v8a'
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    externalNativeBuild {
+        cmake {
+            // Provides a relative path to your CMake build script.
+            path "CMakeLists.txt"
+        }
+    }
+
+    packagingOptions {
+        exclude("version.txt")
+        exclude("META-INF/spring.factories")
+        exclude("META-INF/INDEX.LIST")
+        exclude("META-INF/io.netty.versions.properties")
+    }
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    api fileTree(dir: WEBRTC_LIB_PATH, include: ['libwebrtc.jar'])
+
+    implementation 'androidx.appcompat:appcompat:1.1.0'
+
+    api files("libs/rtc-group.jar")
+
+    testImplementation 'junit:junit:4.13'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.1'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
+}
