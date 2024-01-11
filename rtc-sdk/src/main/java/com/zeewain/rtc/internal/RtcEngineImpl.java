@@ -94,6 +94,11 @@ public class RtcEngineImpl extends RtcEngineEx  {
     }
 
     @Override
+    public void sendBotMessage(String text) {
+        this.nativeSendBotMessage(text);
+    }
+
+    @Override
     public void restartICE(String transportId) {
         this.nativeStartICE(transportId);
     }

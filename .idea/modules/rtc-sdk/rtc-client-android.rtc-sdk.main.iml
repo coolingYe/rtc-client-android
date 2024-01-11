@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module version="4">
+  <component name="NewModuleRootManager">
+    <content url="file://$MODULE_DIR$/../../../rtc-sdk/deps/webrtc/src">
+      <sourceFolder url="file://$MODULE_DIR$/../../../rtc-sdk/deps/webrtc/src" type="native-header-root" />
+    </content>
+    <content url="file://$MODULE_DIR$/../../../rtc-sdk/deps/libmediasoupclient">
+      <sourceFolder url="file://$MODULE_DIR$/../../../rtc-sdk/deps/libmediasoupclient" type="native-Source-root" />
+    </content>
+    <content url="file://$MODULE_DIR$/../../../rtc-sdk/deps/webrtc/src/third_party/abseil-cpp">
+      <sourceFolder url="file://$MODULE_DIR$/../../../rtc-sdk/deps/webrtc/src/third_party/abseil-cpp" type="native-header-root" />
+    </content>
+    <content url="file://$MODULE_DIR$/../../../rtc-sdk/src/androidTest/jni">
+      <sourceFolder url="file://$MODULE_DIR$/../../../rtc-sdk/src/androidTest/jni" type="native-Source-root" />
+    </content>
+    <content url="file://$MODULE_DIR$/../../../rtc-sdk/src/main">
+      <sourceFolder url="file://$MODULE_DIR$/../../../rtc-sdk/src/main/jni" type="native-Source-root" />
+    </content>
+  </component>
+</module>

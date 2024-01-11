@@ -62,6 +62,8 @@ public abstract class RtcEngine {
 
     public abstract void sendChatMessage(String text);
 
+    public abstract void sendBotMessage(String text);
+
     public abstract void restartICE(String transportId);
 
     public abstract void changeDisplayUserName(String targetName);

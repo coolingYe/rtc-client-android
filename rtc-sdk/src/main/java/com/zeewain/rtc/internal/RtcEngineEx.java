@@ -71,6 +71,8 @@ public abstract class RtcEngineEx extends RtcEngine {
     private RecvTransport mRecvTransport;
 
     private DataProducer mChatDataProducer;
+
+    private DataProducer mBotDataProducer;
     private Producer mVideoProducer;
     private Producer mAudioProducer;
 
@@ -158,9 +160,9 @@ public abstract class RtcEngineEx extends RtcEngine {
 
         mService.initClient(mStartupClient.getChannel(), reqInitClient).addListener((GenericFutureListener<Future<NettyResponse<JSONObject>>>) future -> {
             if (future.isSuccess()) {
+                registerReceiver();
                 serverRoomId = future.get().getData().getString("serverRoomId");
                 mIRtcEventHandler.onOpen();
-                registerReceiver();
             } else {
                 mIRtcEventHandler.onDisconnected();
             }
@@ -468,11 +470,26 @@ public abstract class RtcEngineEx extends RtcEngine {
             }
 
             try {
-                mChatDataProducer.send(new DataChannel.Buffer(ByteBuffer.wrap(text.getBytes(StandardCharsets.UTF_8)), false));
+                mChatDataProducer.send(new DataChannel.Buffer(ByteBuffer.wrap(text.getBytes("UTF-8")), false));
             } catch (Exception e) {
                 Logger.e(TAG, "chat DataProducer.send() failed:", e);
             }
         });
+    }
+
+    public void nativeSendBotMessage(String txt) {
+        mWorkHandler.post(
+                () -> {
+                    if (mBotDataProducer == null) {
+                        return;
+                    }
+
+                    try {
+                        mBotDataProducer.send(new DataChannel.Buffer(ByteBuffer.wrap(txt.getBytes("UTF-8")), false));
+                    } catch (Exception e) {
+                        Logger.e(TAG, "bot DataProducer.send() failed:", e);
+                    }
+                });
     }
 
     public boolean nativeHasVideoAvailable() {
@@ -499,7 +516,10 @@ public abstract class RtcEngineEx extends RtcEngine {
         String sctpParameters = resp.getString("sctpParameters");
 
         mSendTransport = mDevice.createSendTransport(sendTransportListener, id, iceParameters, iceCandidates, dtlsParameters, sctpParameters);
-        if (mSendTransport != null) enableChatDataProducer();
+        if (mSendTransport != null) {
+            enableChatDataProducer();
+            enableBotDataProducer();
+        }
     }
 
     @WorkerThread
@@ -539,7 +559,6 @@ public abstract class RtcEngineEx extends RtcEngine {
                                     public void onClose(DataProducer dataProducer) {
                                         Logger.e(TAG, "chat DataProducer \"close\" event");
                                         mChatDataProducer = null;
-
                                     }
 
                                     @Override
@@ -555,15 +574,158 @@ public abstract class RtcEngineEx extends RtcEngine {
                         mChatDataProducer =
                                 mSendTransport.produceData(
                                         listener, "chat", "low", false, 1, 0, "{\"info\":\"my-chat-DataProducer\"}");
+                        mStore.addDataProducer(mChatDataProducer);
                     } catch (Exception e) {
                         Logger.e(TAG, "enableChatDataProducer() | failed:", e);
                     }
                 });
     }
 
+    public void enableBotDataProducer() {
+        Logger.d(TAG, "enableBotDataProducer()");
+        mWorkHandler.post(
+                () -> {
+                    if (mBotDataProducer != null) {
+                        return;
+                    }
+                    try {
+                        DataProducer.Listener listener =
+                                new DataProducer.Listener() {
+                                    @Override
+                                    public void onOpen(DataProducer dataProducer) {
+                                        Logger.d(TAG, "bot DataProducer \"open\" event");
+                                    }
+
+                                    @Override
+                                    public void onClose(DataProducer dataProducer) {
+                                        Logger.e(TAG, "bot DataProducer \"close\" event");
+                                        mBotDataProducer = null;
+                                        mStore.addNotify("error", "Bot DataProducer closed");
+                                    }
+
+                                    @Override
+                                    public void onBufferedAmountChange(
+                                            DataProducer dataProducer, long sentDataSize) {}
+
+                                    @Override
+                                    public void onTransportClose(DataProducer dataProducer) {
+                                        mBotDataProducer = null;
+                                    }
+                                };
+                        mBotDataProducer =
+                                mSendTransport.produceData(
+                                        listener,
+                                        "bot",
+                                        "medium",
+                                        false,
+                                        -1,
+                                        2000,
+                                        "{\"info\":\"my-bot-DataProducer\"}");
+                        mStore.addDataProducer(mBotDataProducer);
+                    } catch (Exception e) {
+                        Logger.e(TAG, "enableBotDataProducer() | failed:", e);
+                    }
+                });
+    }
+
     private void registerReceiver() {
 
-        Processor<JSONObject> textConsumer = new Processor<JSONObject>() {
+//        Processor<JSONObject> roomJoined = new Processor<JSONObject>() {
+//            @Override
+//            public String getMsgCode() {
+//                return "ROOM_JOINED";
+//            }
+//
+//            @Override
+//            public Object process(JSONObject param) {
+//                mIRtcEventHandler.onNotification(new Notification(getMsgCode(), param));
+//                return null;
+//            }
+//        };
+//
+//        NettyProcessorManager.register(roomJoined.getMsgCode(), roomJoined);
+
+//        Processor<JSONObject> userJoined = new Processor<JSONObject>() {
+//            @Override
+//            public String getMsgCode() {
+//                return "USER_JOINED";
+//            }
+//
+//            @Override
+//            public Object process(JSONObject param) {
+//                mIRtcEventHandler.onNotification(new Notification(getMsgCode(), param));
+//                return null;
+//            }
+//        };
+//
+//        NettyProcessorManager.register(userJoined.getMsgCode(), userJoined);
+
+//        Processor<JSONObject> userLeft = new Processor<JSONObject>() {
+//            @Override
+//            public String getMsgCode() {
+//                return "USER_LEFT";
+//            }
+//
+//            @Override
+//            public Object process(JSONObject param) {
+//                mIRtcEventHandler.onNotification(new Notification(getMsgCode(), param));
+//                return null;
+//            }
+//        };
+//
+//        NettyProcessorManager.register(userLeft.getMsgCode(), userLeft);
+
+//        Processor<JSONObject> usersOnline = new Processor<JSONObject>() {
+//            @Override
+//            public String getMsgCode() {
+//                return "USERS_ONLINE";
+//            }
+//
+//            @Override
+//            public Object process(JSONObject param) {
+//                mIRtcEventHandler.onNotification(new Notification(getMsgCode(), param));
+//                return null;
+//            }
+//        };
+//
+//        NettyProcessorManager.register(usersOnline.getMsgCode(), usersOnline);
+
+//        Processor<JSONObject> roomClose = new Processor<JSONObject>() {
+//            @Override
+//            public String getMsgCode() {
+//                return "ROOM_CLOSED";
+//            }
+//
+//            @Override
+//            public Object process(JSONObject param) {
+//                mIRtcEventHandler.onNotification(new Notification(getMsgCode(), param));
+//                return null;
+//            }
+//        };
+//
+//        NettyProcessorManager.register(roomClose.getMsgCode(), roomClose);
+
+//        Processor<JSONObject> createUserConsumer = new Processor<JSONObject>() {
+//            @Override
+//            public String getMsgCode() {
+//                return "CREATE_USER_CONSUMER";
+//            }
+//
+//            @Override
+//            public Object process(JSONObject param) {
+//                mIRtcEventHandler.onNotification(new Notification(getMsgCode(), param));
+//
+//                JSONObject data = new JSONObject();
+//                data.put("roomId", serverRoomId);
+//                data.put("userId", rtcEngineConfig.mUserId);
+//                data.put("messageType", "response");
+//                return NettyResponse.success(data);
+//            }
+//        };
+//
+//        NettyProcessorManager.register(createUserConsumer.getMsgCode(), createUserConsumer);
+
+        Processor<JSONObject> textDataConsumer = new Processor<JSONObject>() {
             @Override
             public String getMsgCode() {
                 return "CREATE_USER_TEXT_CONSUMER";
@@ -577,153 +739,71 @@ public abstract class RtcEngineEx extends RtcEngine {
                 data.put("roomId", serverRoomId);
                 data.put("userId", rtcEngineConfig.mUserId);
                 data.put("messageType", "response");
-
                 return NettyResponse.success(data);
             }
         };
 
-        NettyProcessorManager.register(textConsumer.getMsgCode(), textConsumer);
+        NettyProcessorManager.register(textDataConsumer.getMsgCode(), textDataConsumer);
 
-        Processor<JSONObject> roomJoined = new Processor<JSONObject>() {
-            @Override
-            public String getMsgCode() {
-                return "ROOM_JOINED";
-            }
-
-            @Override
-            public Object process(JSONObject param) {
-                mIRtcEventHandler.onNotification(new Notification(getMsgCode(), param));
-                return null;
-            }
-        };
-
-        NettyProcessorManager.register(roomJoined.getMsgCode(), roomJoined);
-
-        Processor<JSONObject> userJoined = new Processor<JSONObject>() {
-            @Override
-            public String getMsgCode() {
-                return "USER_JOINED";
-            }
-
-            @Override
-            public Object process(JSONObject param) {
-                mIRtcEventHandler.onNotification(new Notification(getMsgCode(), param));
-                return null;
-            }
-        };
-
-        NettyProcessorManager.register(userJoined.getMsgCode(), userJoined);
-
-        Processor<JSONObject> userLeft = new Processor<JSONObject>() {
-            @Override
-            public String getMsgCode() {
-                return "USER_LEFT";
-            }
-
-            @Override
-            public Object process(JSONObject param) {
-                mIRtcEventHandler.onNotification(new Notification(getMsgCode(), param));
-                return null;
-            }
-        };
-
-        NettyProcessorManager.register(userLeft.getMsgCode(), userLeft);
-
-        Processor<JSONObject> usersOnline = new Processor<JSONObject>() {
-            @Override
-            public String getMsgCode() {
-                return "USERS_ONLINE";
-            }
-
-            @Override
-            public Object process(JSONObject param) {
-                mIRtcEventHandler.onNotification(new Notification(getMsgCode(), param));
-                return null;
-            }
-        };
-
-        NettyProcessorManager.register(usersOnline.getMsgCode(), usersOnline);
-
-        Processor<JSONObject> roomClose = new Processor<JSONObject>() {
-            @Override
-            public String getMsgCode() {
-                return "ROOM_CLOSED";
-            }
-
-            @Override
-            public Object process(JSONObject param) {
-                mIRtcEventHandler.onNotification(new Notification(getMsgCode(), param));
-                return null;
-            }
-        };
-
-        NettyProcessorManager.register(roomClose.getMsgCode(), roomClose);
-
-        Processor<JSONObject> createUserConsumer = new Processor<JSONObject>() {
-            @Override
-            public String getMsgCode() {
-                return "CREATE_USER_CONSUMER";
-            }
-
-            @Override
-            public Object process(JSONObject param) {
-                mIRtcEventHandler.onNotification(new Notification(getMsgCode(), param));
-
-                JSONObject data = new JSONObject();
-                data.put("roomId", serverRoomId);
-                data.put("userId", rtcEngineConfig.mUserId);
-                data.put("messageType", "response");
-
-                return NettyResponse.success(data);
-            }
-        };
-
-        NettyProcessorManager.register(createUserConsumer.getMsgCode(), createUserConsumer);
-
-        Processor<JSONObject> closeUserConsumer = new Processor<JSONObject>() {
-            @Override
-            public String getMsgCode() {
-                return "USER_CONSUMER_CLOSED";
-            }
-
-            @Override
-            public Object process(JSONObject param) {
-                mIRtcEventHandler.onNotification(new Notification(getMsgCode(), param));
-                return null;
-            }
-        };
-
-        NettyProcessorManager.register(closeUserConsumer.getMsgCode(), closeUserConsumer);
-
-        Processor<JSONObject> scoreConsumer = new Processor<JSONObject>() {
-            @Override
-            public String getMsgCode() {
-                return "CONSUMER_SCORE";
-            }
-
-            @Override
-            public Object process(JSONObject param) {
-                mIRtcEventHandler.onNotification(new Notification(getMsgCode(), param));
-                return null;
-            }
-        };
-
-        NettyProcessorManager.register(scoreConsumer.getMsgCode(), scoreConsumer);
-
-        Processor<JSONObject> scoreProducer = new Processor<JSONObject>() {
-            @Override
-            public String getMsgCode() {
-                return "PRODUCER_SCORE";
-            }
-
-            @Override
-            public Object process(JSONObject param) {
-                mIRtcEventHandler.onNotification(new Notification(getMsgCode(), param));
-                return null;
-            }
-        };
-
-        NettyProcessorManager.register(scoreProducer.getMsgCode(), scoreProducer);
+//        Processor<JSONObject> closeUserConsumer = new Processor<JSONObject>() {
+//            @Override
+//            public String getMsgCode() {
+//                return "USER_CONSUMER_CLOSED";
+//            }
+//
+//            @Override
+//            public Object process(JSONObject param) {
+//                mIRtcEventHandler.onNotification(new Notification(getMsgCode(), param));
+//                return null;
+//            }
+//        };
+//
+//        NettyProcessorManager.register(closeUserConsumer.getMsgCode(), closeUserConsumer);
+//
+//        Processor<JSONObject> consumerLayersChange = new Processor<JSONObject>() {
+//            @Override
+//            public String getMsgCode() {
+//                return "CONSUMER_LAYERS_CHANGED";
+//            }
+//
+//            @Override
+//            public Object process(JSONObject param) {
+//                mIRtcEventHandler.onNotification(new Notification(getMsgCode(), param));
+//                return null;
+//            }
+//        };
+//
+//        NettyProcessorManager.register(consumerLayersChange.getMsgCode(), consumerLayersChange);
+//
+//        Processor<JSONObject> scoreConsumer = new Processor<JSONObject>() {
+//            @Override
+//            public String getMsgCode() {
+//                return "CONSUMER_SCORE";
+//            }
+//
+//            @Override
+//            public Object process(JSONObject param) {
+//                mIRtcEventHandler.onNotification(new Notification(getMsgCode(), param));
+//                return null;
+//            }
+//        };
+//
+//        NettyProcessorManager.register(scoreConsumer.getMsgCode(), scoreConsumer);
+//
+//        Processor<JSONObject> scoreProducer = new Processor<JSONObject>() {
+//            @Override
+//            public String getMsgCode() {
+//                return "PRODUCER_SCORE";
+//            }
+//
+//            @Override
+//            public Object process(JSONObject param) {
+//                mIRtcEventHandler.onNotification(new Notification(getMsgCode(), param));
+//                return null;
+//            }
+//        };
+//
+//        NettyProcessorManager.register(scoreProducer.getMsgCode(), scoreProducer);
     }
 
     private final SendTransport.Listener sendTransportListener = new SendTransport.Listener() {
@@ -931,7 +1011,7 @@ public abstract class RtcEngineEx extends RtcEngine {
 
                 @Override
                 public void OnOpen(DataConsumer dataConsumer) {
-
+                    Logger.d(TAG, "DataConsumer \"open\" event");
                 }
 
                 @Override
@@ -952,7 +1032,7 @@ public abstract class RtcEngineEx extends RtcEngine {
                         String message = new String(data, StandardCharsets.UTF_8);
                         if ("chat".equals(dataConsumer.getLabel())) {
 
-                            rtcEngineConfig.mEventHandler.onUserMessage(dataConsumer.getId(), message);
+                            rtcEngineConfig.mEventHandler.onUserMessage(peerId, message);
                             Logger.d(TAG, "DataConsumer \"message\"" + message);
                         }
 
