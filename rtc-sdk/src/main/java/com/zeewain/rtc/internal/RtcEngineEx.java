@@ -629,101 +629,100 @@ public abstract class RtcEngineEx extends RtcEngine {
     }
 
     private void registerReceiver() {
+        Processor<JSONObject> roomJoined = new Processor<JSONObject>() {
+            @Override
+            public String getMsgCode() {
+                return "ROOM_JOINED";
+            }
 
-//        Processor<JSONObject> roomJoined = new Processor<JSONObject>() {
-//            @Override
-//            public String getMsgCode() {
-//                return "ROOM_JOINED";
-//            }
-//
-//            @Override
-//            public Object process(JSONObject param) {
-//                mIRtcEventHandler.onNotification(new Notification(getMsgCode(), param));
-//                return null;
-//            }
-//        };
-//
-//        NettyProcessorManager.register(roomJoined.getMsgCode(), roomJoined);
+            @Override
+            public Object process(JSONObject param) {
+                mIRtcEventHandler.onNotification(new Notification(getMsgCode(), param));
+                return null;
+            }
+        };
 
-//        Processor<JSONObject> userJoined = new Processor<JSONObject>() {
-//            @Override
-//            public String getMsgCode() {
-//                return "USER_JOINED";
-//            }
-//
-//            @Override
-//            public Object process(JSONObject param) {
-//                mIRtcEventHandler.onNotification(new Notification(getMsgCode(), param));
-//                return null;
-//            }
-//        };
-//
-//        NettyProcessorManager.register(userJoined.getMsgCode(), userJoined);
+        NettyProcessorManager.register(roomJoined.getMsgCode(), roomJoined);
 
-//        Processor<JSONObject> userLeft = new Processor<JSONObject>() {
-//            @Override
-//            public String getMsgCode() {
-//                return "USER_LEFT";
-//            }
-//
-//            @Override
-//            public Object process(JSONObject param) {
-//                mIRtcEventHandler.onNotification(new Notification(getMsgCode(), param));
-//                return null;
-//            }
-//        };
-//
-//        NettyProcessorManager.register(userLeft.getMsgCode(), userLeft);
+        Processor<JSONObject> userJoined = new Processor<JSONObject>() {
+            @Override
+            public String getMsgCode() {
+                return "USER_JOINED";
+            }
 
-//        Processor<JSONObject> usersOnline = new Processor<JSONObject>() {
-//            @Override
-//            public String getMsgCode() {
-//                return "USERS_ONLINE";
-//            }
-//
-//            @Override
-//            public Object process(JSONObject param) {
-//                mIRtcEventHandler.onNotification(new Notification(getMsgCode(), param));
-//                return null;
-//            }
-//        };
-//
-//        NettyProcessorManager.register(usersOnline.getMsgCode(), usersOnline);
+            @Override
+            public Object process(JSONObject param) {
+                mIRtcEventHandler.onNotification(new Notification(getMsgCode(), param));
+                return null;
+            }
+        };
 
-//        Processor<JSONObject> roomClose = new Processor<JSONObject>() {
-//            @Override
-//            public String getMsgCode() {
-//                return "ROOM_CLOSED";
-//            }
-//
-//            @Override
-//            public Object process(JSONObject param) {
-//                mIRtcEventHandler.onNotification(new Notification(getMsgCode(), param));
-//                return null;
-//            }
-//        };
-//
-//        NettyProcessorManager.register(roomClose.getMsgCode(), roomClose);
+        NettyProcessorManager.register(userJoined.getMsgCode(), userJoined);
 
-//        Processor<JSONObject> createUserConsumer = new Processor<JSONObject>() {
-//            @Override
-//            public String getMsgCode() {
-//                return "CREATE_USER_CONSUMER";
-//            }
-//
-//            @Override
-//            public Object process(JSONObject param) {
-//                mIRtcEventHandler.onNotification(new Notification(getMsgCode(), param));
-//
-//                JSONObject data = new JSONObject();
-//                data.put("roomId", serverRoomId);
-//                data.put("userId", rtcEngineConfig.mUserId);
-//                data.put("messageType", "response");
-//                return NettyResponse.success(data);
-//            }
-//        };
-//
-//        NettyProcessorManager.register(createUserConsumer.getMsgCode(), createUserConsumer);
+        Processor<JSONObject> userLeft = new Processor<JSONObject>() {
+            @Override
+            public String getMsgCode() {
+                return "USER_LEFT";
+            }
+
+            @Override
+            public Object process(JSONObject param) {
+                mIRtcEventHandler.onNotification(new Notification(getMsgCode(), param));
+                return null;
+            }
+        };
+
+        NettyProcessorManager.register(userLeft.getMsgCode(), userLeft);
+
+        Processor<JSONObject> usersOnline = new Processor<JSONObject>() {
+            @Override
+            public String getMsgCode() {
+                return "USERS_ONLINE";
+            }
+
+            @Override
+            public Object process(JSONObject param) {
+                mIRtcEventHandler.onNotification(new Notification(getMsgCode(), param));
+                return null;
+            }
+        };
+
+        NettyProcessorManager.register(usersOnline.getMsgCode(), usersOnline);
+
+        Processor<JSONObject> roomClose = new Processor<JSONObject>() {
+            @Override
+            public String getMsgCode() {
+                return "ROOM_CLOSED";
+            }
+
+            @Override
+            public Object process(JSONObject param) {
+                mIRtcEventHandler.onNotification(new Notification(getMsgCode(), param));
+                return null;
+            }
+        };
+
+        NettyProcessorManager.register(roomClose.getMsgCode(), roomClose);
+
+        Processor<JSONObject> createUserConsumer = new Processor<JSONObject>() {
+            @Override
+            public String getMsgCode() {
+                return "CREATE_USER_CONSUMER";
+            }
+
+            @Override
+            public Object process(JSONObject param) {
+                mIRtcEventHandler.onNotification(new Notification(getMsgCode(), param));
+
+                JSONObject data = new JSONObject();
+                data.put("roomId", serverRoomId);
+                data.put("userId", rtcEngineConfig.mUserId);
+                data.put("messageType", "response");
+                return NettyResponse.success(data);
+            }
+        };
+
+        NettyProcessorManager.register(createUserConsumer.getMsgCode(), createUserConsumer);
 
         Processor<JSONObject> textDataConsumer = new Processor<JSONObject>() {
             @Override
@@ -745,65 +744,65 @@ public abstract class RtcEngineEx extends RtcEngine {
 
         NettyProcessorManager.register(textDataConsumer.getMsgCode(), textDataConsumer);
 
-//        Processor<JSONObject> closeUserConsumer = new Processor<JSONObject>() {
-//            @Override
-//            public String getMsgCode() {
-//                return "USER_CONSUMER_CLOSED";
-//            }
-//
-//            @Override
-//            public Object process(JSONObject param) {
-//                mIRtcEventHandler.onNotification(new Notification(getMsgCode(), param));
-//                return null;
-//            }
-//        };
-//
-//        NettyProcessorManager.register(closeUserConsumer.getMsgCode(), closeUserConsumer);
-//
-//        Processor<JSONObject> consumerLayersChange = new Processor<JSONObject>() {
-//            @Override
-//            public String getMsgCode() {
-//                return "CONSUMER_LAYERS_CHANGED";
-//            }
-//
-//            @Override
-//            public Object process(JSONObject param) {
-//                mIRtcEventHandler.onNotification(new Notification(getMsgCode(), param));
-//                return null;
-//            }
-//        };
-//
-//        NettyProcessorManager.register(consumerLayersChange.getMsgCode(), consumerLayersChange);
-//
-//        Processor<JSONObject> scoreConsumer = new Processor<JSONObject>() {
-//            @Override
-//            public String getMsgCode() {
-//                return "CONSUMER_SCORE";
-//            }
-//
-//            @Override
-//            public Object process(JSONObject param) {
-//                mIRtcEventHandler.onNotification(new Notification(getMsgCode(), param));
-//                return null;
-//            }
-//        };
-//
-//        NettyProcessorManager.register(scoreConsumer.getMsgCode(), scoreConsumer);
-//
-//        Processor<JSONObject> scoreProducer = new Processor<JSONObject>() {
-//            @Override
-//            public String getMsgCode() {
-//                return "PRODUCER_SCORE";
-//            }
-//
-//            @Override
-//            public Object process(JSONObject param) {
-//                mIRtcEventHandler.onNotification(new Notification(getMsgCode(), param));
-//                return null;
-//            }
-//        };
-//
-//        NettyProcessorManager.register(scoreProducer.getMsgCode(), scoreProducer);
+        Processor<JSONObject> closeUserConsumer = new Processor<JSONObject>() {
+            @Override
+            public String getMsgCode() {
+                return "USER_CONSUMER_CLOSED";
+            }
+
+            @Override
+            public Object process(JSONObject param) {
+                mIRtcEventHandler.onNotification(new Notification(getMsgCode(), param));
+                return null;
+            }
+        };
+
+        NettyProcessorManager.register(closeUserConsumer.getMsgCode(), closeUserConsumer);
+
+        Processor<JSONObject> consumerLayersChange = new Processor<JSONObject>() {
+            @Override
+            public String getMsgCode() {
+                return "CONSUMER_LAYERS_CHANGED";
+            }
+
+            @Override
+            public Object process(JSONObject param) {
+                mIRtcEventHandler.onNotification(new Notification(getMsgCode(), param));
+                return null;
+            }
+        };
+
+        NettyProcessorManager.register(consumerLayersChange.getMsgCode(), consumerLayersChange);
+
+        Processor<JSONObject> scoreConsumer = new Processor<JSONObject>() {
+            @Override
+            public String getMsgCode() {
+                return "CONSUMER_SCORE";
+            }
+
+            @Override
+            public Object process(JSONObject param) {
+                mIRtcEventHandler.onNotification(new Notification(getMsgCode(), param));
+                return null;
+            }
+        };
+
+        NettyProcessorManager.register(scoreConsumer.getMsgCode(), scoreConsumer);
+
+        Processor<JSONObject> scoreProducer = new Processor<JSONObject>() {
+            @Override
+            public String getMsgCode() {
+                return "PRODUCER_SCORE";
+            }
+
+            @Override
+            public Object process(JSONObject param) {
+                mIRtcEventHandler.onNotification(new Notification(getMsgCode(), param));
+                return null;
+            }
+        };
+
+        NettyProcessorManager.register(scoreProducer.getMsgCode(), scoreProducer);
     }
 
     private final SendTransport.Listener sendTransportListener = new SendTransport.Listener() {
