@@ -1,5 +1,7 @@
 package com.zeewain.rtc.internal;
 
+import static com.zeewain.rtc.IRtcEngineEventHandler.ErrorCode.ERR_CONNECTION_LOST;
+
 import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -18,12 +20,14 @@ import com.zeewain.cbb.netty.client.StartupClient;
 import com.zeewain.cbb.netty.core.Processor;
 import com.zeewain.cbb.netty.mvc.NettyProcessorManager;
 import com.zeewain.cbb.netty.protocol.NettyResponse;
+import com.zeewain.rtc.IRtcEngineEventHandler;
 import com.zeewain.rtc.IRtcEventHandler;
 import com.zeewain.rtc.RtcEngine;
 import com.zeewain.rtc.RtcEngineConfig;
 import com.zeewain.rtc.lv.RoomStore;
 import com.zeewain.rtc.model.CameraCapturerConfiguration;
 import com.zeewain.rtc.model.Notification;
+import com.zeewain.utils.NetworkUtils;
 import com.zeewain.utils.PeerConnectionUtils;
 
 import org.mediasoup.droid.Consumer;
@@ -150,6 +154,10 @@ public abstract class RtcEngineEx extends RtcEngine {
     }
 
     protected void nativeJoinChannel() {
+        if (!NetworkUtils.isNetworkAvailable(getRtcEngineConfig().mContext)) {
+            getRtcEngineConfig().mEventHandler.onError(ERR_CONNECTION_LOST);
+            return;
+        }
 
         JSONObject reqInitClient = new JSONObject();
         reqInitClient.put("roomId", rtcEngineConfig.mRoomId);
@@ -160,16 +168,36 @@ public abstract class RtcEngineEx extends RtcEngine {
 
         mService.initClient(mStartupClient.getChannel(), reqInitClient).addListener((GenericFutureListener<Future<NettyResponse<JSONObject>>>) future -> {
             if (future.isSuccess()) {
-                registerReceiver();
-                serverRoomId = future.get().getData().getString("serverRoomId");
-                mIRtcEventHandler.onOpen();
+                switch (future.get().getCode()) {
+                    case 0:
+                        registerReceiver();
+                        serverRoomId = future.get().getData().getString("serverRoomId");
+                        mIRtcEventHandler.onOpen();
+                        break;
+                    case 1:
+                        getRtcEngineConfig().mEventHandler.onError(IRtcEngineEventHandler.ErrorCode.ERR_INVALID_TOKEN);
+                        mWorkHandler.post(() -> {
+                            throw new RuntimeException ("Token is invalid");
+                        });
+                    case 1000:
+                        getRtcEngineConfig().mEventHandler.onError(IRtcEngineEventHandler.ErrorCode.ERR_NOT_READY);
+                        mWorkHandler.post(() -> {
+                            throw new RuntimeException ("Initialization failed. Room number and APP ID and token does not match.");
+                        });
+                }
             } else {
                 mIRtcEventHandler.onDisconnected();
+                getRtcEngineConfig().mEventHandler.onError(IRtcEngineEventHandler.ErrorCode.ERR_NOT_READY);
             }
         });
     }
 
     protected void nativeLeaveChannel() {
+        if (!NetworkUtils.isNetworkAvailable(getRtcEngineConfig().mContext)) {
+            getRtcEngineConfig().mEventHandler.onError(ERR_CONNECTION_LOST);
+            return;
+        }
+
         JSONObject leaveReq = new JSONObject();
         leaveReq.put("userId", rtcEngineConfig.mUserId);
         leaveReq.put("roomId", serverRoomId);
@@ -184,6 +212,11 @@ public abstract class RtcEngineEx extends RtcEngine {
     }
 
     protected void nativeCloseChannel() {
+        if (!NetworkUtils.isNetworkAvailable(getRtcEngineConfig().mContext)) {
+            getRtcEngineConfig().mEventHandler.onError(ERR_CONNECTION_LOST);
+            return;
+        }
+
         JSONObject closeReq = new JSONObject();
         closeReq.put("userId", rtcEngineConfig.mUserId);
         closeReq.put("roomId", serverRoomId);
@@ -220,6 +253,11 @@ public abstract class RtcEngineEx extends RtcEngine {
     }
 
     private void joinImpl() throws MediasoupException, ExecutionException, InterruptedException {
+        if (!NetworkUtils.isNetworkAvailable(getRtcEngineConfig().mContext)) {
+            getRtcEngineConfig().mEventHandler.onError(ERR_CONNECTION_LOST);
+            return;
+        }
+
         JSONObject rtpReq = new JSONObject();
         rtpReq.put("roomId", serverRoomId);
         rtpReq.put("userId", rtcEngineConfig.mUserId);
@@ -939,12 +977,15 @@ public abstract class RtcEngineEx extends RtcEngine {
                 break;
             case "USER_CONSUMER_CLOSED":
                 String consumerId = jsonData.getString("consumerId");
+                String kind = jsonData.getString("kind");
                 ConsumerHolder holder = mConsumers.remove(consumerId);
                 if (holder == null) return;
                 holder.mConsumer.close();
                 mConsumers.remove(consumerId);
                 mStore.removeConsumer(holder.peerId, holder.mConsumer.getId());
-                getRtcEngineConfig().mEventHandler.onRemoteVideoStateChanged(holder.peerId, holder.mConsumer.getId(),false);
+                if (kind.equals("video")) {
+                    getRtcEngineConfig().mEventHandler.onRemoteVideoStateChanged(holder.peerId, holder.mConsumer.getId(), false);
+                }
                 break;
             case "CREATE_USER_CONSUMER":
                 onNewConsumer(jsonData);
@@ -1123,6 +1164,11 @@ public abstract class RtcEngineEx extends RtcEngine {
     }
 
     public void nativeStartICE(String transportId) {
+        if (!NetworkUtils.isNetworkAvailable(getRtcEngineConfig().mContext)) {
+            getRtcEngineConfig().mEventHandler.onError(ERR_CONNECTION_LOST);
+            return;
+        }
+
         JSONObject reqStartICE = new JSONObject();
         reqStartICE.put("transportId", transportId);
         reqStartICE.put("roomId", serverRoomId);
@@ -1131,6 +1177,11 @@ public abstract class RtcEngineEx extends RtcEngine {
     }
 
     public void nativeChangeDisplayUserName(String targetName) {
+        if (!NetworkUtils.isNetworkAvailable(getRtcEngineConfig().mContext)) {
+            getRtcEngineConfig().mEventHandler.onError(ERR_CONNECTION_LOST);
+            return;
+        }
+
         JSONObject reqChangeDisplay = new JSONObject();
         reqChangeDisplay.put("displayName", targetName);
         reqChangeDisplay.put("roomId", serverRoomId);
@@ -1139,6 +1190,11 @@ public abstract class RtcEngineEx extends RtcEngine {
     }
 
     public void nativeStartFusion() {
+        if (!NetworkUtils.isNetworkAvailable(getRtcEngineConfig().mContext)) {
+            getRtcEngineConfig().mEventHandler.onError(ERR_CONNECTION_LOST);
+            return;
+        }
+
         JSONObject reqStartFusion = new JSONObject();
         reqStartFusion.put("roomId", serverRoomId);
         reqStartFusion.put("userId", rtcEngineConfig.mUserId);
@@ -1146,6 +1202,11 @@ public abstract class RtcEngineEx extends RtcEngine {
     }
 
     public void nativeStopFusion() {
+        if (!NetworkUtils.isNetworkAvailable(getRtcEngineConfig().mContext)) {
+            getRtcEngineConfig().mEventHandler.onError(ERR_CONNECTION_LOST);
+            return;
+        }
+
         JSONObject reqStopFusion = new JSONObject();
         reqStopFusion.put("roomId", serverRoomId);
         reqStopFusion.put("userId", rtcEngineConfig.mUserId);
@@ -1153,6 +1214,11 @@ public abstract class RtcEngineEx extends RtcEngine {
     }
 
     public void nativeUpdateFusionSetting(int userCount, float scale, float fromBottomRatio, float scaleFromLeft, float scaleFromWidth, int rotationAngle) {
+        if (!NetworkUtils.isNetworkAvailable(getRtcEngineConfig().mContext)) {
+            getRtcEngineConfig().mEventHandler.onError(ERR_CONNECTION_LOST);
+            return;
+        }
+
         JSONObject reqChangeFusionConfig = new JSONObject();
         reqChangeFusionConfig.put("userNumber", userCount);
         reqChangeFusionConfig.put("scale", scale);
@@ -1166,6 +1232,11 @@ public abstract class RtcEngineEx extends RtcEngine {
     }
 
     public void nativeUpdateFusionBackground(String imageUrl) {
+        if (!NetworkUtils.isNetworkAvailable(getRtcEngineConfig().mContext)) {
+            getRtcEngineConfig().mEventHandler.onError(ERR_CONNECTION_LOST);
+            return;
+        }
+
         JSONObject reqBackground = new JSONObject();
         reqBackground.put("backgroundUrl", imageUrl);
         reqBackground.put("roomId", serverRoomId);
