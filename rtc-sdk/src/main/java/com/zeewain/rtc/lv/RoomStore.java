@@ -52,17 +52,6 @@ public class RoomStore {
                 });
     }
 
-//  public void setRoomState(RoomClient.ConnectionState state) {
-//    roomInfo.postValue(roomInfo -> roomInfo.setConnectionState(state));
-//
-//    if (RoomClient.ConnectionState.CLOSED.equals(state)) {
-//      peers.postValue(Peers::clear);
-//      me.postValue(Me::clear);
-//      producers.postValue(Producers::clear);
-//      consumers.postValue(Consumers::clear);
-//    }
-//  }
-
     public void setRoomActiveSpeaker(String peerId) {
         roomInfo.postValue(roomInfo -> roomInfo.setActiveSpeakerId(peerId));
     }

@@ -1,0 +1,16 @@
+/.gradle/config.properties
+/.gradle/7.4/checksums/sha1-checksums.bin
+/workspace.xml
+/migrations.xml
+/.idea/migrations.xml
+/.idea/gradle.xml
+/.idea/modules.xml
+/.gradle/buildOutputCleanup.lock
+/.gradle/7.4/executionHistory.bin
+/.gradle/7.4/executionHistory.lock
+/.gradle/file-system.probe
+/.gradle/fileHashes.bin
+/.gradle/fileHashes.lock
+/.gradle/outputFiles.bin
+/.gradle/resourceHashesCache.bin
+/.idea/modules/rtc-sdk/rtc-client-android.rtc-sdk.iml
