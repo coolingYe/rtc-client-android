@@ -3,7 +3,7 @@ package com.zeewain.rtc.internal;
 import androidx.annotation.NonNull;
 
 import com.zeewain.rtc.RtcEngineConfig;
-import com.zeewain.rtc.model.CameraCapturerConfiguration;
+import com.zeewain.rtc.model.CameraConfig;
 
 import org.webrtc.SurfaceViewRenderer;
 
@@ -23,109 +23,108 @@ public class RtcEngineImpl extends RtcEngineEx  {
     }
 
     @Override
-    public synchronized void joinChannel() {
-        this.nativeJoinChannel();
+    public synchronized int joinChannel() {
+        return this.nativeJoinChannel();
     }
 
     @Override
-    public synchronized void leaveChannel() {
-        this.nativeLeaveChannel();
+    public synchronized int leaveChannel() {
+        return this.nativeLeaveChannel();
     }
 
     @Override
-    public synchronized void closeChannel() {
-        this.nativeCloseChannel();
+    public synchronized int closeChannel() {
+        return this.nativeCloseChannel();
     }
 
     @Override
-    public synchronized void setupCameraCapturerConfiguration(CameraCapturerConfiguration config) {
-        this.nativeSetupCameraCapturerConfiguration(config);
+    public synchronized void setupCameraConfig(CameraConfig config) {
+        this.nativeSetupCameraConfig(config);
     }
 
     @Override
-    public synchronized void enableVideo() {
-        this.nativeEnableCamera();
+    public synchronized int enableVideo() {
+        return this.nativeEnableCamera();
     }
 
     @Override
-    public synchronized Boolean hasVideoAvailable() {
+    public synchronized int hasVideoAvailable() {
         return this.nativeHasVideoAvailable();
     }
 
     @Override
-    public synchronized Boolean hasAudioAvailable() {
+    public synchronized int hasAudioAvailable() {
         return this.nativeHasAudioAvailable();
     }
 
     @Override
-    public synchronized void disableVideo() {
-        this.nativeDisableCamera();
+    public synchronized int disableVideo() {
+        return this.nativeDisableCamera();
     }
 
     @Override
-    public synchronized void enableAudio() {
-        this.nativeEnableAudio();
+    public synchronized int enableAudio() {
+        return this.nativeEnableAudio();
     }
 
     @Override
-    public synchronized void disableAudio() {
-        this.nativeDisableAudio();
+    public synchronized int disableAudio() {
+        return this.nativeDisableAudio();
     }
 
     @Override
-    public synchronized void switchCamera() {
-        this.nativeSwitchCamera();
+    public synchronized int switchCamera() {
+        return this.nativeSwitchCamera();
     }
 
     @Override
-    public void setupLocalVideo(SurfaceViewRenderer viewRenderer) {
-        this.nativeSetupLocalVideo(viewRenderer);
+    public synchronized int setupLocalVideo(SurfaceViewRenderer viewRenderer) {
+        return this.nativeSetupLocalVideo(viewRenderer);
     }
 
     @Override
-    public void setupRemoteVideo(SurfaceViewRenderer viewRenderer, String uid) {
-        this.nativeSetupRemoteVideo(viewRenderer, uid);
-    }
-
-
-    @Override
-    public void sendChatMessage(String text) {
-        this.nativeSendChatMessage(text);
+    public synchronized int setupRemoteVideo(SurfaceViewRenderer viewRenderer, String uid) {
+        return this.nativeSetupRemoteVideo(viewRenderer, uid);
     }
 
     @Override
-    public void sendBotMessage(String text) {
-        this.nativeSendBotMessage(text);
+    public synchronized int sendChatMessage(String text) {
+       return this.nativeSendChatMessage(text);
     }
 
     @Override
-    public void restartICE(String transportId) {
-        this.nativeStartICE(transportId);
+    public synchronized int sendBotMessage(String text) {
+        return this.nativeSendBotMessage(text);
     }
 
     @Override
-    public void changeDisplayUserName(String targetName) {
-        this.nativeChangeDisplayUserName(targetName);
+    public synchronized int restartICE(String transportId) {
+        return this.nativeStartICE(transportId);
     }
 
     @Override
-    public void startFusion() {
-        this.nativeStartFusion();
+    public synchronized int changeDisplayUserName(String targetName) {
+        return this.nativeChangeDisplayUserName(targetName);
     }
 
     @Override
-    public void stopFusion() {
-        this.nativeStopFusion();
+    public synchronized int startFusion() {
+        return this.nativeStartFusion();
     }
 
     @Override
-    public void updateFusionSetting(int userCount, float scale, float fromBottomRatio, float scaleFromLeft, float scaleFromWidth, int rotationAngle) {
-        this.nativeUpdateFusionSetting(userCount, scale, fromBottomRatio, scaleFromLeft, scaleFromWidth, rotationAngle);
+    public synchronized int stopFusion() {
+        return this.nativeStopFusion();
     }
 
     @Override
-    public void updateFusionBackground(String imageUrl) {
-        this.nativeUpdateFusionBackground(imageUrl);
+    public synchronized int updateFusionSetting(int userCount, float scale, float fromBottomRatio, float scaleFromLeft, float scaleFromWidth, int rotationAngle) {
+        return this.nativeUpdateFusionSetting(userCount, scale, fromBottomRatio, scaleFromLeft, scaleFromWidth, rotationAngle);
+    }
+
+    @Override
+    public synchronized int updateFusionBackground(String imageUrl) {
+        return this.nativeUpdateFusionBackground(imageUrl);
     }
 
 }

@@ -2,7 +2,7 @@ package com.zeewain.rtc.model;
 
 import org.webrtc.CalledByNative;
 
-public class CameraCapturerConfiguration {
+public class CameraConfig {
     public enum CAMERA_DIRECTION {
         CAMERA_REAR(0),
         CAMERA_FRONT(1);
@@ -49,17 +49,17 @@ public class CameraCapturerConfiguration {
     }
     public CaptureFormat captureFormat;
     public boolean followEncodeDimensionRatio;
-    public CameraCapturerConfiguration(CAMERA_DIRECTION cameraDirection) {
+    public CameraConfig(CAMERA_DIRECTION cameraDirection) {
         this.cameraDirection = cameraDirection;
         this.captureFormat = new CaptureFormat();
         this.followEncodeDimensionRatio = true;
     }
-    public CameraCapturerConfiguration(CaptureFormat captureFormat) {
+    public CameraConfig(CaptureFormat captureFormat) {
         this.captureFormat = captureFormat;
         this.cameraDirection = CAMERA_DIRECTION.CAMERA_FRONT;
         this.followEncodeDimensionRatio = true;
     }
-    public CameraCapturerConfiguration(
+    public CameraConfig(
             CAMERA_DIRECTION cameraDirection, CaptureFormat captureFormat) {
         this.cameraDirection = cameraDirection;
         this.captureFormat = captureFormat;

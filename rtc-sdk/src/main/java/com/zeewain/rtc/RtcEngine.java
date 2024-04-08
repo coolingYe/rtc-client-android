@@ -1,7 +1,7 @@
 package com.zeewain.rtc;
 
 import com.zeewain.rtc.internal.RtcEngineImpl;
-import com.zeewain.rtc.model.CameraCapturerConfiguration;
+import com.zeewain.rtc.model.CameraConfig;
 
 import org.webrtc.SurfaceViewRenderer;
 
@@ -31,50 +31,48 @@ public abstract class RtcEngine {
         }
     }
 
-
     public abstract String getRoomLink();
 
-    public abstract void joinChannel();
+    public abstract int joinChannel();
 
-    public abstract void leaveChannel();
+    public abstract int leaveChannel();
 
-    public abstract void closeChannel();
+    public abstract int closeChannel();
 
-    public abstract void setupCameraCapturerConfiguration(CameraCapturerConfiguration config);
+    public abstract void setupCameraConfig(CameraConfig config);
 
-    public abstract void enableVideo();
+    public abstract int enableVideo();
 
-    public abstract Boolean hasVideoAvailable();
+    public abstract int hasVideoAvailable();
 
-    public abstract Boolean hasAudioAvailable();
+    public abstract int hasAudioAvailable();
 
-    public abstract void disableVideo();
+    public abstract int disableVideo();
 
-    public abstract void enableAudio();
+    public abstract int enableAudio();
 
-    public abstract void disableAudio();
+    public abstract int disableAudio();
 
-    public abstract void switchCamera();
+    public abstract int switchCamera();
 
-    public abstract void setupLocalVideo(SurfaceViewRenderer viewRenderer);
+    public abstract int setupLocalVideo(SurfaceViewRenderer viewRenderer);
 
-    public abstract void setupRemoteVideo(SurfaceViewRenderer viewRenderer, String uid);
+    public abstract int setupRemoteVideo(SurfaceViewRenderer viewRenderer, String uid);
 
-    public abstract void sendChatMessage(String text);
+    public abstract int sendChatMessage(String text);
 
-    public abstract void sendBotMessage(String text);
+    public abstract int sendBotMessage(String text);
 
-    public abstract void restartICE(String transportId);
+    public abstract int restartICE(String transportId);
 
-    public abstract void changeDisplayUserName(String targetName);
+    public abstract int changeDisplayUserName(String targetName);
 
-    public abstract void startFusion();
+    public abstract int startFusion();
 
-    public abstract void stopFusion();
+    public abstract int stopFusion();
 
-    public abstract void updateFusionSetting(int userCount, float scale, float fromBottomRatio, float scaleFromLeft, float scaleFromWidth, int rotationAngle);
+    public abstract int updateFusionSetting(int userCount, float scale, float fromBottomRatio, float scaleFromLeft, float scaleFromWidth, int rotationAngle);
 
-    public abstract void updateFusionBackground(String imageUrl);
-
+    public abstract int updateFusionBackground(String imageUrl);
 
 }

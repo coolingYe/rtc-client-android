@@ -7,9 +7,9 @@ public class RtcEngineConfig {
     public Context context = null;
     public int channelProfile = 0;
     public IRtcEngineEventHandler eventHandler = null;
-    public String mRoomId;
+    public String roomId;
     public String userId;
-    public String userToken;
+    public String token;
     public String appId;
     public String displayName;
     public String backgroundUrl;

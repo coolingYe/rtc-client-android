@@ -25,7 +25,7 @@ import com.zeewain.rtc.IRtcEventHandler;
 import com.zeewain.rtc.RtcEngine;
 import com.zeewain.rtc.RtcEngineConfig;
 import com.zeewain.rtc.lv.RoomStore;
-import com.zeewain.rtc.model.CameraCapturerConfiguration;
+import com.zeewain.rtc.model.CameraConfig;
 import com.zeewain.rtc.model.Notification;
 import com.zeewain.utils.NetworkUtils;
 import com.zeewain.utils.PeerConnectionUtils;
@@ -58,6 +58,7 @@ import java.util.concurrent.ExecutorService;
 import cn.hutool.core.lang.Pair;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
+import io.netty.util.concurrent.Promise;
 
 public abstract class RtcEngineEx extends RtcEngine {
 
@@ -83,7 +84,7 @@ public abstract class RtcEngineEx extends RtcEngine {
     private VideoTrack mLocalVideoTrack;
     private AudioTrack mLocalAudioTrack;
 
-    private CameraCapturerConfiguration mCameraConfig;
+    private CameraConfig mCameraConfig;
 
     private final Device mDevice;
 
@@ -143,7 +144,7 @@ public abstract class RtcEngineEx extends RtcEngine {
                 mPeerConnectionUtils = new PeerConnectionUtils();
             }
         });
-        mCameraConfig = new CameraCapturerConfiguration(new CameraCapturerConfiguration.CaptureFormat());
+        mCameraConfig = new CameraConfig(new CameraConfig.CaptureFormat());
         mDevice = new Device();
         mStartupClient = ClientFactory.get();
         mService = ClientFactory.getSender(RtcServer.class);
@@ -153,20 +154,20 @@ public abstract class RtcEngineEx extends RtcEngine {
         return rtcEngineConfig;
     }
 
-    protected void nativeJoinChannel() {
+    protected int nativeJoinChannel() {
         if (!NetworkUtils.isNetworkAvailable(getRtcEngineConfig().context)) {
             getRtcEngineConfig().eventHandler.onError(ERR_CONNECTION_LOST);
-            return;
+            return -1;
         }
 
         JSONObject reqInitClient = new JSONObject();
-        reqInitClient.put("roomId", rtcEngineConfig.mRoomId);
+        reqInitClient.put("roomId", rtcEngineConfig.roomId);
         reqInitClient.put("userId", rtcEngineConfig.userId);
-        reqInitClient.put("userToken", rtcEngineConfig.userToken);
+        reqInitClient.put("userToken", rtcEngineConfig.token);
         reqInitClient.put("zeewainAppId", rtcEngineConfig.appId);
         reqInitClient.put("type", "normal");
 
-        mService.initClient(mStartupClient.getChannel(), reqInitClient).addListener((GenericFutureListener<Future<NettyResponse<JSONObject>>>) future -> {
+        Promise<NettyResponse<JSONObject>> future0 = mService.initClient(mStartupClient.getChannel(), reqInitClient).addListener((GenericFutureListener<Future<NettyResponse<JSONObject>>>) future -> {
             if (future.isSuccess()) {
                 switch (future.get().getCode()) {
                     case 0:
@@ -177,12 +178,12 @@ public abstract class RtcEngineEx extends RtcEngine {
                     case 1:
                         getRtcEngineConfig().eventHandler.onError(IRtcEngineEventHandler.ErrorCode.ERR_INVALID_TOKEN);
                         mWorkHandler.post(() -> {
-                            throw new RuntimeException ("Token is invalid");
+                            throw new RuntimeException("Token is invalid");
                         });
                     case 1000:
                         getRtcEngineConfig().eventHandler.onError(IRtcEngineEventHandler.ErrorCode.ERR_NOT_READY);
                         mWorkHandler.post(() -> {
-                            throw new RuntimeException ("Initialization failed. Room number and APP ID and token does not match.");
+                            throw new RuntimeException("Initialization failed. Room number and APP ID and token does not match.");
                         });
                 }
             } else {
@@ -190,12 +191,19 @@ public abstract class RtcEngineEx extends RtcEngine {
                 getRtcEngineConfig().eventHandler.onError(IRtcEngineEventHandler.ErrorCode.ERR_NOT_READY);
             }
         });
+
+        try {
+            int code = future0.get().getCode();
+            return code == 0 ? 0 : -1;
+        } catch (ExecutionException | InterruptedException e) {
+            return -1;
+        }
     }
 
-    protected void nativeLeaveChannel() {
+    protected int nativeLeaveChannel() {
         if (!NetworkUtils.isNetworkAvailable(getRtcEngineConfig().context)) {
             getRtcEngineConfig().eventHandler.onError(ERR_CONNECTION_LOST);
-            return;
+            return -1;
         }
 
         JSONObject leaveReq = new JSONObject();
@@ -203,18 +211,25 @@ public abstract class RtcEngineEx extends RtcEngine {
         leaveReq.put("roomId", serverRoomId);
         leaveReq.put("messageType", "request");
 
-        mService.exitRoom(mStartupClient.getChannel(), leaveReq).addListener((GenericFutureListener<Future<NettyResponse<JSONObject>>>) future -> {
+        Promise<NettyResponse<JSONObject>> future0 = mService.exitRoom(mStartupClient.getChannel(), leaveReq).addListener((GenericFutureListener<Future<NettyResponse<JSONObject>>>) future -> {
             if (future.isSuccess()) {
                 rtcEngineConfig.eventHandler.onLeaveChannel();
                 mIRtcEventHandler.onClose();
             }
         });
+
+        try {
+            int code = future0.get().getCode();
+            return code == 0 ? 0 : -1;
+        } catch (ExecutionException | InterruptedException e) {
+            return -1;
+        }
     }
 
-    protected void nativeCloseChannel() {
+    protected int nativeCloseChannel() {
         if (!NetworkUtils.isNetworkAvailable(getRtcEngineConfig().context)) {
             getRtcEngineConfig().eventHandler.onError(ERR_CONNECTION_LOST);
-            return;
+            return -1;
         }
 
         JSONObject closeReq = new JSONObject();
@@ -222,15 +237,22 @@ public abstract class RtcEngineEx extends RtcEngine {
         closeReq.put("roomId", serverRoomId);
         closeReq.put("messageType", "request");
 
-        mService.closeRoom(mStartupClient.getChannel(), closeReq).addListener((GenericFutureListener<Future<NettyResponse<JSONObject>>>) future -> {
+        Promise<NettyResponse<JSONObject>> future0 = mService.closeRoom(mStartupClient.getChannel(), closeReq).addListener((GenericFutureListener<Future<NettyResponse<JSONObject>>>) future -> {
             if (future.isSuccess()) {
                 rtcEngineConfig.eventHandler.onLeaveChannel();
                 mIRtcEventHandler.onClose();
             }
         });
+
+        try {
+            int code = future0.get().getCode();
+            return code == 0 ? 0 : -1;
+        } catch (ExecutionException | InterruptedException e) {
+            return -1;
+        }
     }
 
-    protected void nativeSwitchCamera() {
+    protected int nativeSwitchCamera() {
         mStore.setCamInProgress(true);
         mWorkHandler.post(() -> mPeerConnectionUtils.switchCam(new CameraVideoCapturer.CameraSwitchHandler() {
             @Override
@@ -243,6 +265,7 @@ public abstract class RtcEngineEx extends RtcEngine {
                 mStore.setCamInProgress(false);
             }
         }));
+        return 0;
     }
 
     private String getVideoType() {
@@ -356,12 +379,12 @@ public abstract class RtcEngineEx extends RtcEngine {
         });
     }
 
-    public void nativeEnableCamera() {
-        mMainHandler.post(() -> mWorkHandler.post(this::enableCameraImpl));
+    public int nativeEnableCamera() {
+        return mMainHandler.post(() -> mWorkHandler.post(this::enableCameraImpl)) ? 0 : -1;
     }
 
-    public void nativeDisableCamera() {
-        mWorkHandler.post(this::disableCameraImpl);
+    public int nativeDisableCamera() {
+       return mWorkHandler.post(this::disableCameraImpl) ? 0 : -1;
     }
 
     @WorkerThread
@@ -403,7 +426,6 @@ public abstract class RtcEngineEx extends RtcEngine {
             }
 
             if (mLocalVideoTrack == null) {
-
                 mLocalVideoTrack = createVideoTrack();
                 mLocalVideoTrack.setEnabled(true);
             }
@@ -433,16 +455,16 @@ public abstract class RtcEngineEx extends RtcEngine {
         }
     }
 
-    public void nativeSetupCameraCapturerConfiguration(CameraCapturerConfiguration config) {
+    public void nativeSetupCameraConfig(CameraConfig config) {
         this.mCameraConfig = config;
     }
 
-    public void nativeEnableAudio() {
-        mWorkHandler.post(this::enableAudioImpl);
+    public int nativeEnableAudio() {
+        return mWorkHandler.post(this::enableAudioImpl) ? 0 : -1;
     }
 
-    public void nativeDisableAudio() {
-        mWorkHandler.post(this::disableAudioImpl);
+    public int nativeDisableAudio() {
+        return mWorkHandler.post(this::disableAudioImpl) ? 0 : -1;
     }
 
     @WorkerThread
@@ -501,8 +523,8 @@ public abstract class RtcEngineEx extends RtcEngine {
         mAudioProducer = null;
     }
 
-    public void nativeSendChatMessage(String text) {
-        mWorkHandler.post(() -> {
+    public int nativeSendChatMessage(String text) {
+        return mWorkHandler.post(() -> {
             if (mChatDataProducer == null) {
                 return;
             }
@@ -512,11 +534,11 @@ public abstract class RtcEngineEx extends RtcEngine {
             } catch (Exception e) {
                 Logger.e(TAG, "chat DataProducer.send() failed:", e);
             }
-        });
+        }) ? 0 : -1;
     }
 
-    public void nativeSendBotMessage(String txt) {
-        mWorkHandler.post(
+    public int nativeSendBotMessage(String txt) {
+        return mWorkHandler.post(
                 () -> {
                     if (mBotDataProducer == null) {
                         return;
@@ -527,15 +549,15 @@ public abstract class RtcEngineEx extends RtcEngine {
                     } catch (Exception e) {
                         Logger.e(TAG, "bot DataProducer.send() failed:", e);
                     }
-                });
+                }) ? 0 : -1;
     }
 
-    public boolean nativeHasVideoAvailable() {
-        return mVideoProducer != null;
+    public int nativeHasVideoAvailable() {
+        return mVideoProducer != null ? 0 : -1;
     }
 
-    public boolean nativeHasAudioAvailable() {
-        return mAudioProducer != null;
+    public int nativeHasAudioAvailable() {
+        return mAudioProducer != null ? 0 : -1;
     }
 
     @WorkerThread
@@ -643,7 +665,8 @@ public abstract class RtcEngineEx extends RtcEngine {
 
                                     @Override
                                     public void onBufferedAmountChange(
-                                            DataProducer dataProducer, long sentDataSize) {}
+                                            DataProducer dataProducer, long sentDataSize) {
+                                    }
 
                                     @Override
                                     public void onTransportClose(DataProducer dataProducer) {
@@ -1099,8 +1122,8 @@ public abstract class RtcEngineEx extends RtcEngine {
         }
     }
 
-    public void nativeSetupLocalVideo(SurfaceViewRenderer viewRenderer) {
-        mMainHandler.post(() -> {
+    public int nativeSetupLocalVideo(SurfaceViewRenderer viewRenderer) {
+        return mMainHandler.post(() -> {
             viewRenderer.init(PeerConnectionUtils.getEglContext(), null);
             mWorkHandler.post(() -> {
                 if (mLocalVideoTrack == null) {
@@ -1109,20 +1132,19 @@ public abstract class RtcEngineEx extends RtcEngine {
                     mLocalVideoTrack.addSink(viewRenderer);
                 } else mLocalVideoTrack.addSink(viewRenderer);
             });
-        });
+        }) ? 0 : -1;
     }
 
     private VideoTrack createVideoTrack() {
         if (mCameraConfig.cameraDirection.getValue() == 1) {
             PeerConnectionUtils.setPreferCameraFace("front");
         }
-       return mPeerConnectionUtils.createVideoTrack(rtcEngineConfig.context, "Cam",
+        return mPeerConnectionUtils.createVideoTrack(rtcEngineConfig.context, "Cam",
                 mCameraConfig.captureFormat.width, mCameraConfig.captureFormat.height, mCameraConfig.captureFormat.fps);
     }
 
-    public void nativeSetupRemoteVideo(SurfaceViewRenderer viewRenderer, String uid) {
+    public int nativeSetupRemoteVideo(SurfaceViewRenderer viewRenderer, String uid) {
         mStore.getPeers().getValue().getPeer(uid).getConsumers().forEach(s -> {
-
             ConsumerHolder consumerHolder = mConsumers.get(s);
             if (consumerHolder == null) return;
             if (consumerHolder.peerId.equals(uid)) {
@@ -1134,6 +1156,7 @@ public abstract class RtcEngineEx extends RtcEngine {
             }
 
         });
+        return 0;
     }
 
     private String fetchProduceId(JSONObject json) {
@@ -1163,60 +1186,88 @@ public abstract class RtcEngineEx extends RtcEngine {
         }
     }
 
-    public void nativeStartICE(String transportId) {
+    public int nativeStartICE(String transportId) {
         if (!NetworkUtils.isNetworkAvailable(getRtcEngineConfig().context)) {
             getRtcEngineConfig().eventHandler.onError(ERR_CONNECTION_LOST);
-            return;
+            return -1;
         }
 
         JSONObject reqStartICE = new JSONObject();
         reqStartICE.put("transportId", transportId);
         reqStartICE.put("roomId", serverRoomId);
         reqStartICE.put("userId", rtcEngineConfig.userId);
-        mService.restartICE(mStartupClient.getChannel(), reqStartICE);
+        Promise<Response<JSONObject>> future = mService.restartICE(mStartupClient.getChannel(), reqStartICE);
+
+        try {
+            int code = future.get().getCode();
+            return code == 0 ? 0 : -1;
+        } catch (ExecutionException | InterruptedException e) {
+            return -1;
+        }
     }
 
-    public void nativeChangeDisplayUserName(String targetName) {
+    public int nativeChangeDisplayUserName(String targetName) {
         if (!NetworkUtils.isNetworkAvailable(getRtcEngineConfig().context)) {
             getRtcEngineConfig().eventHandler.onError(ERR_CONNECTION_LOST);
-            return;
+            return -1;
         }
 
         JSONObject reqChangeDisplay = new JSONObject();
         reqChangeDisplay.put("displayName", targetName);
         reqChangeDisplay.put("roomId", serverRoomId);
         reqChangeDisplay.put("userId", rtcEngineConfig.userId);
-        mService.changeDisplayUserName(mStartupClient.getChannel(), reqChangeDisplay);
+        Promise<Response<JSONObject>> future = mService.changeDisplayUserName(mStartupClient.getChannel(), reqChangeDisplay);
+
+        try {
+            int code = future.get().getCode();
+            return code == 0 ? 0 : -1;
+        } catch (ExecutionException | InterruptedException e) {
+            return -1;
+        }
     }
 
-    public void nativeStartFusion() {
+    public int nativeStartFusion() {
         if (!NetworkUtils.isNetworkAvailable(getRtcEngineConfig().context)) {
             getRtcEngineConfig().eventHandler.onError(ERR_CONNECTION_LOST);
-            return;
+            return -1;
         }
 
         JSONObject reqStartFusion = new JSONObject();
         reqStartFusion.put("roomId", serverRoomId);
         reqStartFusion.put("userId", rtcEngineConfig.userId);
-        mService.startFusion(mStartupClient.getChannel(), reqStartFusion);
+        Promise<Response<JSONObject>> future = mService.startFusion(mStartupClient.getChannel(), reqStartFusion);
+
+        try {
+            int code = future.get().getCode();
+            return code == 0 ? 0 : -1;
+        } catch (ExecutionException | InterruptedException e) {
+            return -1;
+        }
     }
 
-    public void nativeStopFusion() {
+    public int nativeStopFusion() {
         if (!NetworkUtils.isNetworkAvailable(getRtcEngineConfig().context)) {
             getRtcEngineConfig().eventHandler.onError(ERR_CONNECTION_LOST);
-            return;
+            return -1;
         }
 
         JSONObject reqStopFusion = new JSONObject();
         reqStopFusion.put("roomId", serverRoomId);
         reqStopFusion.put("userId", rtcEngineConfig.userId);
-        mService.stopFusion(mStartupClient.getChannel(), reqStopFusion);
+        Promise<Response<JSONObject>> future = mService.stopFusion(mStartupClient.getChannel(), reqStopFusion);
+
+        try {
+            int code = future.get().getCode();
+            return code == 0 ? 0 : -1;
+        } catch (ExecutionException | InterruptedException e) {
+            return -1;
+        }
     }
 
-    public void nativeUpdateFusionSetting(int userCount, float scale, float fromBottomRatio, float scaleFromLeft, float scaleFromWidth, int rotationAngle) {
+    public int nativeUpdateFusionSetting(int userCount, float scale, float fromBottomRatio, float scaleFromLeft, float scaleFromWidth, int rotationAngle) {
         if (!NetworkUtils.isNetworkAvailable(getRtcEngineConfig().context)) {
             getRtcEngineConfig().eventHandler.onError(ERR_CONNECTION_LOST);
-            return;
+            return -1;
         }
 
         JSONObject reqChangeFusionConfig = new JSONObject();
@@ -1226,30 +1277,44 @@ public abstract class RtcEngineEx extends RtcEngine {
         reqChangeFusionConfig.put("scaleFromLeft", scaleFromLeft);
         reqChangeFusionConfig.put("scaleFromWidth", scaleFromWidth);
         reqChangeFusionConfig.put("rotationAngle", rotationAngle);
-        reqChangeFusionConfig.put("roomId",serverRoomId);
+        reqChangeFusionConfig.put("roomId", serverRoomId);
         reqChangeFusionConfig.put("userId", rtcEngineConfig.userId);
-        mService.updateFusionSetting(mStartupClient.getChannel(), reqChangeFusionConfig);
+        Promise<Response<JSONObject>> future = mService.updateFusionSetting(mStartupClient.getChannel(), reqChangeFusionConfig);
+
+        try {
+            int code = future.get().getCode();
+            return code == 0 ? 0 : -1;
+        } catch (ExecutionException | InterruptedException e) {
+            return -1;
+        }
     }
 
-    public void nativeUpdateFusionBackground(String imageUrl) {
+    public int nativeUpdateFusionBackground(String imageUrl) {
         if (!NetworkUtils.isNetworkAvailable(getRtcEngineConfig().context)) {
             getRtcEngineConfig().eventHandler.onError(ERR_CONNECTION_LOST);
-            return;
+            return -1;
         }
 
         JSONObject reqBackground = new JSONObject();
         reqBackground.put("backgroundUrl", imageUrl);
         reqBackground.put("roomId", serverRoomId);
         reqBackground.put("userId", getRtcEngineConfig().userId);
-        mService.updateFusionBackground(mStartupClient.getChannel(), reqBackground).addListener((GenericFutureListener<Future<Response<JSONObject>>>) future -> {
-            if (future.isSuccess()) {
+        Promise<Response<JSONObject>> future = mService.updateFusionBackground(mStartupClient.getChannel(), reqBackground).addListener((GenericFutureListener<Future<Response<JSONObject>>>) future0 -> {
+            if (future0.isSuccess()) {
                 rtcEngineConfig.backgroundUrl = imageUrl;
             }
         });
+
+        try {
+            int code = future.get().getCode();
+            return code == 0 ? 0 : -1;
+        } catch (ExecutionException | InterruptedException e) {
+            return -1;
+        }
     }
 
     public String nativeGetRoomLink() {
-        return "https://" + ClientFactory.getHost() + "/media-rtc-demos/?roomId=" + getRtcEngineConfig().mRoomId + "&videoType=" + getVideoType();
+        return "https://" + ClientFactory.getHost() + "/media-rtc-demos/?roomId=" + getRtcEngineConfig().roomId + "&videoType=" + getVideoType();
     }
 
     public void nativeDestroy() {
