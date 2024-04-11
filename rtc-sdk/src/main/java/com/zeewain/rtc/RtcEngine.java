@@ -31,6 +31,10 @@ public abstract class RtcEngine {
         }
     }
 
+    public final static int CHANNEL_TYPE_NORMAL = 0;
+
+    public final static int CHANNEL_TYPE_FUSION = 1;
+
     public abstract String getRoomLink();
 
     public abstract int joinChannel();

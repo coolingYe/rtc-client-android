@@ -1,4 +1,4 @@
-package com.zeewain.utils;
+package com.zeewain.common.utils;
 
 import java.util.Random;
 

@@ -1,7 +1,7 @@
 package com.zeewain.rtc.model;
 
 
-import com.zeewain.utils.CommonUtils;
+import com.zeewain.common.utils.CommonUtils;
 
 public class Notify {
 

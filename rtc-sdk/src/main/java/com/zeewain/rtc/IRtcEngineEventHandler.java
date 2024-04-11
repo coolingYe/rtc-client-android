@@ -59,17 +59,4 @@ public interface IRtcEngineEventHandler {
      */
     void onUserMessage(String uid, String message);
 
-    class ErrorCode {
-
-        public static final int ERR_FAILED = 1;
-        public static final int ERR_INVALID_ARGUMENT = 2;
-        public static final int ERR_NOT_READY = 3;
-        public static final int ERR_INVALID_TOKEN = 4;
-        public static final int ERR_CONNECTION_INTERRUPTED = 5;
-        public static final int ERR_CONNECTION_LOST = 6;
-
-        public ErrorCode() {
-        }
-    }
-
 }

@@ -1,7 +1,5 @@
 package com.zeewain.rtc.internal;
 
-import static com.zeewain.rtc.IRtcEngineEventHandler.ErrorCode.ERR_CONNECTION_LOST;
-
 import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -20,15 +18,15 @@ import com.zeewain.cbb.netty.client.StartupClient;
 import com.zeewain.cbb.netty.core.Processor;
 import com.zeewain.cbb.netty.mvc.NettyProcessorManager;
 import com.zeewain.cbb.netty.protocol.NettyResponse;
-import com.zeewain.rtc.IRtcEngineEventHandler;
+import com.zeewain.common.core.ErrorCode;
 import com.zeewain.rtc.IRtcEventHandler;
 import com.zeewain.rtc.RtcEngine;
 import com.zeewain.rtc.RtcEngineConfig;
 import com.zeewain.rtc.lv.RoomStore;
 import com.zeewain.rtc.model.CameraConfig;
 import com.zeewain.rtc.model.Notification;
-import com.zeewain.utils.NetworkUtils;
-import com.zeewain.utils.PeerConnectionUtils;
+import com.zeewain.common.utils.NetworkUtils;
+import com.zeewain.common.utils.PeerConnectionUtils;
 
 import org.mediasoup.droid.Consumer;
 import org.mediasoup.droid.DataConsumer;
@@ -156,7 +154,7 @@ public abstract class RtcEngineEx extends RtcEngine {
 
     protected int nativeJoinChannel() {
         if (!NetworkUtils.isNetworkAvailable(getRtcEngineConfig().context)) {
-            getRtcEngineConfig().eventHandler.onError(ERR_CONNECTION_LOST);
+            getRtcEngineConfig().eventHandler.onError(ErrorCode.ERR_CONNECTION_LOST);
             return -1;
         }
 
@@ -176,19 +174,19 @@ public abstract class RtcEngineEx extends RtcEngine {
                         mIRtcEventHandler.onOpen();
                         break;
                     case 1:
-                        getRtcEngineConfig().eventHandler.onError(IRtcEngineEventHandler.ErrorCode.ERR_INVALID_TOKEN);
+                        getRtcEngineConfig().eventHandler.onError(ErrorCode.ERR_INVALID_TOKEN);
                         mWorkHandler.post(() -> {
                             throw new RuntimeException("Token is invalid");
                         });
                     case 1000:
-                        getRtcEngineConfig().eventHandler.onError(IRtcEngineEventHandler.ErrorCode.ERR_NOT_READY);
+                        getRtcEngineConfig().eventHandler.onError(ErrorCode.ERR_CONFIG_PARAMETER_NOT_MATCH);
                         mWorkHandler.post(() -> {
                             throw new RuntimeException("Initialization failed. Room number and APP ID and token does not match.");
                         });
                 }
             } else {
                 mIRtcEventHandler.onDisconnected();
-                getRtcEngineConfig().eventHandler.onError(IRtcEngineEventHandler.ErrorCode.ERR_NOT_READY);
+                getRtcEngineConfig().eventHandler.onError(ErrorCode.ERR_NOT_READY);
             }
         });
 
@@ -202,7 +200,7 @@ public abstract class RtcEngineEx extends RtcEngine {
 
     protected int nativeLeaveChannel() {
         if (!NetworkUtils.isNetworkAvailable(getRtcEngineConfig().context)) {
-            getRtcEngineConfig().eventHandler.onError(ERR_CONNECTION_LOST);
+            getRtcEngineConfig().eventHandler.onError(ErrorCode.ERR_CONNECTION_LOST);
             return -1;
         }
 
@@ -228,7 +226,7 @@ public abstract class RtcEngineEx extends RtcEngine {
 
     protected int nativeCloseChannel() {
         if (!NetworkUtils.isNetworkAvailable(getRtcEngineConfig().context)) {
-            getRtcEngineConfig().eventHandler.onError(ERR_CONNECTION_LOST);
+            getRtcEngineConfig().eventHandler.onError(ErrorCode.ERR_CONNECTION_LOST);
             return -1;
         }
 
@@ -277,7 +275,7 @@ public abstract class RtcEngineEx extends RtcEngine {
 
     private void joinImpl() throws MediasoupException, ExecutionException, InterruptedException {
         if (!NetworkUtils.isNetworkAvailable(getRtcEngineConfig().context)) {
-            getRtcEngineConfig().eventHandler.onError(ERR_CONNECTION_LOST);
+            getRtcEngineConfig().eventHandler.onError(ErrorCode.ERR_CONNECTION_LOST);
             return;
         }
 
@@ -1188,7 +1186,7 @@ public abstract class RtcEngineEx extends RtcEngine {
 
     public int nativeStartICE(String transportId) {
         if (!NetworkUtils.isNetworkAvailable(getRtcEngineConfig().context)) {
-            getRtcEngineConfig().eventHandler.onError(ERR_CONNECTION_LOST);
+            getRtcEngineConfig().eventHandler.onError(ErrorCode.ERR_CONNECTION_LOST);
             return -1;
         }
 
@@ -1208,7 +1206,7 @@ public abstract class RtcEngineEx extends RtcEngine {
 
     public int nativeChangeDisplayUserName(String targetName) {
         if (!NetworkUtils.isNetworkAvailable(getRtcEngineConfig().context)) {
-            getRtcEngineConfig().eventHandler.onError(ERR_CONNECTION_LOST);
+            getRtcEngineConfig().eventHandler.onError(ErrorCode.ERR_CONNECTION_LOST);
             return -1;
         }
 
@@ -1228,7 +1226,7 @@ public abstract class RtcEngineEx extends RtcEngine {
 
     public int nativeStartFusion() {
         if (!NetworkUtils.isNetworkAvailable(getRtcEngineConfig().context)) {
-            getRtcEngineConfig().eventHandler.onError(ERR_CONNECTION_LOST);
+            getRtcEngineConfig().eventHandler.onError(ErrorCode.ERR_CONNECTION_LOST);
             return -1;
         }
 
@@ -1247,7 +1245,7 @@ public abstract class RtcEngineEx extends RtcEngine {
 
     public int nativeStopFusion() {
         if (!NetworkUtils.isNetworkAvailable(getRtcEngineConfig().context)) {
-            getRtcEngineConfig().eventHandler.onError(ERR_CONNECTION_LOST);
+            getRtcEngineConfig().eventHandler.onError(ErrorCode.ERR_CONNECTION_LOST);
             return -1;
         }
 
@@ -1266,7 +1264,7 @@ public abstract class RtcEngineEx extends RtcEngine {
 
     public int nativeUpdateFusionSetting(int userCount, float scale, float fromBottomRatio, float scaleFromLeft, float scaleFromWidth, int rotationAngle) {
         if (!NetworkUtils.isNetworkAvailable(getRtcEngineConfig().context)) {
-            getRtcEngineConfig().eventHandler.onError(ERR_CONNECTION_LOST);
+            getRtcEngineConfig().eventHandler.onError(ErrorCode.ERR_CONNECTION_LOST);
             return -1;
         }
 
@@ -1291,7 +1289,7 @@ public abstract class RtcEngineEx extends RtcEngine {
 
     public int nativeUpdateFusionBackground(String imageUrl) {
         if (!NetworkUtils.isNetworkAvailable(getRtcEngineConfig().context)) {
-            getRtcEngineConfig().eventHandler.onError(ERR_CONNECTION_LOST);
+            getRtcEngineConfig().eventHandler.onError(ErrorCode.ERR_CONNECTION_LOST);
             return -1;
         }
 
